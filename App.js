@@ -11,10 +11,37 @@ const Stack = createStackNavigator();
 const App = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
-        <Stack.Screen name="Login" component={Login} />
-        <Stack.Screen name="Menu" component={Menu} />
-        <Stack.Screen name="Cliente" component={Cliente} />
+      <Stack.Navigator
+        initialRouteName="Login"
+        screenOptions={{
+          headerStyle: {
+            backgroundColor: '#4a90e2', // cor da barra superior
+          },
+          headerTintColor: '#fff', // cor do texto do header
+          headerTitleStyle: {
+            fontWeight: 'bold',
+            fontSize: 20,
+          },
+          cardStyle: {
+            backgroundColor: '#f5f5f5', // fundo das telas
+          },
+        }}
+      >
+        <Stack.Screen
+          name="Login"
+          component={Login}
+          options={{ headerShown: false }} // esconde o header no Login
+        />
+        <Stack.Screen
+          name="Menu"
+          component={Menu}
+          options={{ title: 'Menu Principal' }}
+        />
+        <Stack.Screen
+          name="Cadastro"
+          component={Cliente}
+          options={{ title: 'Cadastro' }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
