@@ -4,7 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 
 import Login from './Login';
 import Menu from './Menu';
-import Cliente from './Cliente';
+import Cliente from './Cadastro';
 
 const Stack = createStackNavigator();
 
@@ -40,7 +40,8 @@ const App = () => {
         <Stack.Screen
           name="Cadastro"
           component={Cliente}
-          options={{ title: 'Cadastro' }}
+          options={{ headerShown: false  }}
+          
         />
       </Stack.Navigator>
     </NavigationContainer>

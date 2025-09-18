@@ -8,9 +8,9 @@ const Menu = ({ navigation }) => {
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => navigation.navigate('Cliente')}
+        onPress={() => navigation.navigate('Cadastro')}
       >
-        <Text style={styles.buttonText}>Cadastro de Cliente</Text>
+        <Text style={styles.buttonText}>Cadastro</Text>
       </TouchableOpacity>
 
       <TouchableOpacity

@@ -16,14 +16,15 @@ const Login = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Image
-        source={{ uri: 'https://img.icons8.com/ios-filled/100/ffffff/user.png' }}
-        style={styles.logo}
-      />
-      <Text style={styles.title}>Bem-vindo!</Text>
+          source={require('./img/Logo BarberCash.png')}
+          style={styles.logo}
+        />
+      <View style={styles.box}>
+        <Text style={styles.title}>Bem-Vindo</Text>
 
       <TextInput
         style={styles.input}
-        placeholder="Nome do usuário"
+        placeholder="Usuário"
         placeholderTextColor="#777"
         value={username}
         onChangeText={setUsername}
@@ -31,7 +32,7 @@ const Login = ({ navigation }) => {
 
       <TextInput
         style={styles.input}
-        placeholder="Informe sua senha"
+        placeholder="Senha"
         placeholderTextColor="#777"
         secureTextEntry
         value={password}
@@ -39,14 +40,16 @@ const Login = ({ navigation }) => {
       />
 
       <TouchableOpacity style={styles.button} onPress={handleLogin} activeOpacity={0.8}>
-        <Text style={styles.buttonText}>Conectar-se</Text>
+        <Text style={styles.buttonText}>Entrar</Text>
       </TouchableOpacity>
 
       {/* Link em texto para Cadastro */}
       <TouchableOpacity onPress={() => navigation.navigate('Cadastro')}>
         <Text style={styles.linkText}>Não tem conta? Cadastre-se aqui</Text>
       </TouchableOpacity>
-    </View>
+    </View>    
+  </View>
+      
   );
 };
 
@@ -55,14 +58,31 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#0077A3',
+    backgroundColor: 'rgba(1, 67, 70, 1)',
     padding: 20,
   },
-  logo: {
-    width: 100,
-    height: 100,
+  box: {
+    padding: 20,
+    backgroundColor: 'rgba(0, 107, 111, 0.87)',
     marginBottom: 20,
-    tintColor: '#fff',
+    borderRadius: 10,
+    alignItems: 'center',
+    width: '80%',
+    shadowColor: '#000000ff',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.5,
+    shadowRadius: 2,
+    elevation: 5,
+  },
+  logo: {
+    width: 200,
+    height: 150,
+    marginBottom: 30,
+    shadowColor: '#000000ff',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.5,
+    shadowRadius: 2,
+    elevation: 5,
   },
   title: {
     fontSize: 26,
@@ -72,9 +92,9 @@ const styles = StyleSheet.create({
   },
   input: {
     width: '100%',
-    height: 50,
+    height: 40,
     backgroundColor: '#fff',
-    borderRadius: 8,
+    borderRadius: 10,
     paddingHorizontal: 15,
     marginBottom: 15,
     elevation: 2,
@@ -82,8 +102,8 @@ const styles = StyleSheet.create({
   button: {
     width: '100%',
     height: 50,
-    backgroundColor: '#4a90e2',
-    borderRadius: 8,
+    backgroundColor: '#003a38ff',
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 15,
@@ -96,7 +116,7 @@ const styles = StyleSheet.create({
   },
   linkText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 15,
     marginTop: 10,
     textDecorationLine: 'underline',
   },
