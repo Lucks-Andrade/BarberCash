@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#0077A3',
+    backgroundColor: 'rgba(1, 67, 70, 1)',
     padding: 20,
   },
   title: {
@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
   button: {
     width: '100%',
     height: 50,
-    backgroundColor: '#4a90e2',
+    backgroundColor: 'rgba(0, 107, 111, 0.87)',
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',

@@ -5,6 +5,7 @@ const Cadastro = ({ navigation }) => {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [telefone, setTelefone] = useState('');
+  const[senha,setSenha] = useState('');
 
   const handleSalvar = () => {
     if (nome && email) {
@@ -42,12 +43,22 @@ const Cadastro = ({ navigation }) => {
 
         <TextInput
           style={styles.input}
+          placeholder="Senha"
+          placeholderTextColor="#777"
+          value={senha}
+          onChangeText={setSenha}
+          keyboardType="visible-password"
+        />
+
+
+        <TextInput
+          style={styles.input}
           placeholder="Telefone"
           placeholderTextColor="#777"
           value={telefone}
           onChangeText={setTelefone}
           keyboardType="phone-pad"
-          maxLength={11} //Limita a 15 números
+          maxLength={11} //Limita a 11 números
         />
 
         <TouchableOpacity style={styles.button} onPress={handleSalvar}>

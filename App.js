@@ -35,7 +35,7 @@ const App = () => {
         <Stack.Screen
           name="Menu"
           component={Menu}
-          options={{ title: 'Menu Principal' }}
+          options={{ headerShown: false }} 
         />
         <Stack.Screen
           name="Cadastro"
