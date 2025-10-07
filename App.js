@@ -4,7 +4,8 @@ import { createStackNavigator } from '@react-navigation/stack';
 
 import Login from './Login';
 import Menu from './Menu';
-import Cliente from './Cadastro';
+import Cadastro from './Cadastro';
+import Lancamento from './Lancamento';
 
 const Stack = createStackNavigator();
 
@@ -39,9 +40,14 @@ const App = () => {
         />
         <Stack.Screen
           name="Cadastro"
-          component={Cliente}
+          component={Cadastro}
           options={{ headerShown: false  }}
           
+        />
+        <Stack.Screen
+        name="Lancamento"
+        component={Lancamento}
+        options={{headerShown: false}}
         />
       </Stack.Navigator>
     </NavigationContainer>

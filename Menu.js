@@ -13,12 +13,23 @@ const Menu = ({ navigation }) => {
         <Text style={styles.buttonText}>Cadastro</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: '#e74c3c' }]}
-        onPress={() => navigation.navigate('Login')}
-      >
-        <Text style={styles.buttonText}>Sair</Text>
-      </TouchableOpacity>
+      <View style={styles.box}>
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: '#e74c3c' }]}
+          onPress={() => navigation.navigate('Login')}
+        >
+          <Text style={styles.buttonText}>Sair</Text>
+        </TouchableOpacity>
+      </View>
+      <View style={styles.box}>
+        <TouchableOpacity
+          style={[styles.button, {backgroundColor: "#000000"}]}
+          onPress={() => navigation.navigate('Lancamento')}
+        >
+          <Text style={styles.buttonText}>Lançamentos</Text>
+        </TouchableOpacity>
+        
+      </View>
     </View>
   );
 };
@@ -36,6 +47,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 40,
+  },
+  box: {
+    padding: 20,
+    backgroundColor: 'rgba(0, 107, 111, 0.87)',
+    marginBottom: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    width: '80%',
+    shadowColor: '#000000ff',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.5,
+    shadowRadius: 2,
+    elevation: 5,
   },
   button: {
     width: '100%',
