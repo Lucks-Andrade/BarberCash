@@ -26,7 +26,7 @@ const Login = ({ navigation }) => {
 
       if (response.ok) {
         Alert.alert('Sucesso', data.message);
-        navigation.navigate('Dashboard');
+        navigation.navigate('Menu');
       } else {
         Alert.alert('Erro', data.message || 'Erro ao fazer login. Tente novamente.');
       }

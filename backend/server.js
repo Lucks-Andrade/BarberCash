@@ -27,56 +27,38 @@ db.connect(err => {
 });
 
 // 4. Criar uma rota de teste
-//    Quando você acessar http://localhost:3001/ no navegador, verá uma mensagem.
 app.get('/', (req, res ) => {
   res.send('API do BarberCash está funcionando!');
 });
 
-// Rota para buscar todos os serviços (exemplo)
-app.get('/servicos', (req, res) => {
-    const query = 'SELECT * FROM Servicos WHERE ativo = TRUE';
-    db.query(query, (err, results) => {
-        if (err) {
-            return res.status(500).send('Erro ao buscar serviços no banco de dados.');
-        }
-        res.json(results);
-    });
-});
-
-//ROTA PARA O CADASTRO DE USUÁRIOS
+// ROTA PARA O CADASTRO DE USUÁRIOS
 app.post('/usuarios', (req, res) => {
   const {nome, email, senha, telefone} = req.body;
-
   if (!nome || !email || !telefone || !senha) {
     return res.status(400).json({success: false,message: 'Todos os campos são obrigatórios '})
   }
-
-  // CORREÇÃO: Mova a declaração da query para cá
   const query = 'INSERT INTO usuarios (nome, email, senha, telefone) VALUES (?,?,?,?)';
-    db.query(query, [nome, email, senha, telefone], (err, result) =>{
-      if(err){
-        console.error('Erro ao cadastrar usuário', err);
-        return res.status(500).json({success: false, message: 'Erro ao cadastrar usuário. Tente novamente.'});
-      }
-      res.status(201).json({success: true, message: 'Usuário cadastrado com sucesso!'});
-    });
+  db.query(query, [nome, email, senha, telefone], (err, result) =>{
+    if(err){
+      console.error('Erro ao cadastrar usuário', err);
+      return res.status(500).json({success: false, message: 'Erro ao cadastrar usuário. Tente novamente.'});
+    }
+    res.status(201).json({success: true, message: 'Usuário cadastrado com sucesso!'});
+  });
 });
 
-// NOVA ROTA DE LOGIN
+// ROTA DE LOGIN
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
-
   if (!email || !password) {
     return res.status(400).json({ success: false, message: 'E-mail e senha são obrigatórios.' });
   }
-
   const query = 'SELECT * FROM usuarios WHERE email = ? AND senha = ?';
   db.query(query, [email, password], (err, results) => {
     if (err) {
       console.error('Erro na consulta de login:', err);
       return res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
     }
-
     if (results.length > 0) {
       res.json({ success: true, message: 'Login realizado com sucesso!' });
     } else {
@@ -85,6 +67,88 @@ app.post('/login', (req, res) => {
   });
 });
 
+// ROTAS PARA LANÇAMENTOS (SERVIÇOS, PRODUTOS, DESPESAS)
+
+// Rota para adicionar um novo serviço
+app.post('/servicos', (req, res) => {
+  const { nome_servico, preco, descricao } = req.body;
+  if (!nome_servico || preco === undefined || !descricao) {
+    return res.status(400).json({ success: false, message: 'Todos os campos são obrigatórios para Serviço.' });
+  }
+  const query = 'INSERT INTO servicos (nome_servico, preco, descricao) VALUES (?, ?, ?)';
+  db.query(query, [nome_servico, parseFloat(preco), descricao], (err, result) => {
+    if (err) {
+      console.error('Erro ao adicionar serviço:', err);
+      return res.status(500).json({ success: false, message: 'Erro ao adicionar serviço.' });
+    }
+    res.status(201).json({ success: true, message: 'Serviço adicionado com sucesso!', id: result.insertId });
+  });
+});
+
+// Rota para buscar todos os serviços
+app.get('/servicos', (req, res) => {
+  const query = 'SELECT * FROM servicos';
+  db.query(query, (err, results) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: 'Erro ao buscar serviços.' });
+    }
+    res.json({ success: true, data: results });
+  });
+});
+
+// Rota para adicionar um novo produto
+app.post('/produtos', (req, res) => {
+  const { nome_produto, preco_venda, quantidade_estoque, descricao } = req.body;
+  if (!nome_produto || preco_venda === undefined || quantidade_estoque === undefined || !descricao) {
+    return res.status(400).json({ success: false, message: 'Todos os campos são obrigatórios para Produto.' });
+  }
+  const query = 'INSERT INTO produtos (nome_produto, preco_venda, quantidade_estoque, descricao) VALUES (?, ?, ?, ?)';
+  db.query(query, [nome_produto, parseFloat(preco_venda), parseInt(quantidade_estoque), descricao], (err, result) => {
+    if (err) {
+      console.error('Erro ao adicionar produto:', err);
+      return res.status(500).json({ success: false, message: 'Erro ao adicionar produto.' });
+    }
+    res.status(201).json({ success: true, message: 'Produto adicionado com sucesso!', id: result.insertId });
+  });
+});
+
+// Rota para buscar todos os produtos
+app.get('/produtos', (req, res) => {
+  const query = 'SELECT * FROM produtos';
+  db.query(query, (err, results) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: 'Erro ao buscar produtos.' });
+    }
+    res.json({ success: true, data: results });
+  });
+});
+
+// Rota para adicionar uma nova despesa
+app.post('/despesas', (req, res) => {
+  const { descricao, valor } = req.body;
+  if (!descricao || valor === undefined) {
+    return res.status(400).json({ success: false, message: 'Descrição e valor são obrigatórios para Despesa.' });
+  }
+  const query = 'INSERT INTO despesas (descricao, valor) VALUES (?, ?)';
+  db.query(query, [descricao, parseFloat(valor)], (err, result) => {
+    if (err) {
+      console.error('Erro ao adicionar despesa:', err);
+      return res.status(500).json({ success: false, message: 'Erro ao adicionar despesa.' });
+    }
+    res.status(201).json({ success: true, message: 'Despesa adicionada com sucesso!', id: result.insertId });
+  });
+});
+
+// Rota para buscar todas as despesas
+app.get('/despesas', (req, res) => {
+  const query = 'SELECT * FROM despesas';
+  db.query(query, (err, results) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: 'Erro ao buscar despesas.' });
+    }
+    res.json({ success: true, data: results });
+  });
+});
 
 // 5. Iniciar o servidor
 const PORT = 3001; // A porta que a API vai usar

@@ -1,34 +1,35 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 
 const Menu = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Menu Principal</Text>
 
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => navigation.navigate('Cadastro')}
-      >
-        <Text style={styles.buttonText}>Cadastro</Text>
-      </TouchableOpacity>
-
-      <View style={styles.box}>
+      <View style={styles.menuContainer}>
+        {/* Botão do Dashboard */}
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: '#e74c3c' }]}
-          onPress={() => navigation.navigate('Login')}
+          style={styles.menuButton}
+          onPress={() => navigation.navigate('Dashboard')}
         >
-          <Text style={styles.buttonText}>Sair</Text>
+          <Text style={styles.buttonText}>Dashboard</Text>
         </TouchableOpacity>
-      </View>
-      <View style={styles.box}>
+
+        {/* Botão de Lançamentos */}
         <TouchableOpacity
-          style={[styles.button, {backgroundColor: "#000000"}]}
+          style={styles.menuButton}
           onPress={() => navigation.navigate('Lancamento')}
         >
           <Text style={styles.buttonText}>Lançamentos</Text>
         </TouchableOpacity>
-        
+
+        {/* Botão de Sair */}
+        <TouchableOpacity
+          style={[styles.menuButton, styles.exitButton]}
+          onPress={() => navigation.navigate('Login')}
+        >
+          <Text style={styles.buttonText}>Sair</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -48,25 +49,17 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginBottom: 40,
   },
-  box: {
-    padding: 20,
-    backgroundColor: 'rgba(0, 107, 111, 0.87)',
-    marginBottom: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    width: '80%',
-    shadowColor: '#000000ff',
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.5,
-    shadowRadius: 2,
-    elevation: 5,
-  },
-  button: {
+  menuContainer: {
     width: '100%',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  menuButton: {
+    width: '80%',
     height: 50,
     backgroundColor: 'rgba(0, 107, 111, 0.87)',
-    borderRadius: 8,
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 15,
@@ -76,6 +69,10 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  exitButton: {
+    backgroundColor: '#c0392b',
+    marginTop: 20,
   },
 });
 

@@ -1,80 +1,192 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
     View, 
     Text, 
     TouchableOpacity, 
     StyleSheet, 
     FlatList, 
-    Modal, // 1. Importar o Modal
-    TextInput, // 2. Importar o TextInput para o formulário
-    Alert // Para dar feedback ao usuário
+    Modal,
+    TextInput,
+    Alert,
 } from 'react-native';
 
-// --- Dados de Exemplo (continuam aqui por enquanto) ---
-const despesasData = [
-  { id: '1', descricao: 'Cera de Cabelo', valor: 'R$ 25,00' },
-  { id: '2', descricao: 'Lâminas de Barbear', valor: 'R$ 15,00' },
-];
+const API_URL = 'http://10.0.2.2:3001';
 
-const produtosData = [
-  { id: '1', nome: 'Pomada Modeladora', preco: 'R$ 35,00' },
-  { id: '2', nome: 'Óleo para Barba', preco: 'R$ 30,00' },
-];
-
-const precosData = [
-    { id: '1', servico: 'Corte Masculino', valor: 'R$ 40,00' },
-    { id: '2', servico: 'Barba', valor: 'R$ 30,00' },
-];
-
-
-const Lancamentos = ({ navigation }) => {
-  const [abaAtiva, setAbaAtiva] = useState('Precos');
-  
-  // --- Estados para o Modal e Formulário ---
+const Lancamento = ({ navigation }) => {
+  const [abaAtiva, setAbaAtiva] = useState('Serviços');
   const [modalVisivel, setModalVisivel] = useState(false);
-  const [descricao, setDescricao] = useState('');
-  const [valor, setValor] = useState('');
-  const [tipoLancamento, setTipoLancamento] = useState('Entrada'); // 'Entrada' ou 'Saida'
+  
+  // Estados para os dados do formulário
+  const [nomeServico, setNomeServico] = useState('');
+  const [precoServico, setPrecoServico] = useState('');
+  const [descricaoServico, setDescricaoServico] = useState('');
+  
+  const [nomeProduto, setNomeProduto] = useState('');
+  const [precoVendaProduto, setPrecoVendaProduto] = useState('');
+  const [quantidadeEstoque, setQuantidadeEstoque] = useState('');
+  const [descricaoProduto, setDescricaoProduto] = useState('');
 
-  const handleSalvarLancamento = () => {
-    if (!descricao || !valor) {
-      Alert.alert('Erro', 'Por favor, preencha a descrição e o valor.');
-      return;
+  const [descricaoDespesa, setDescricaoDespesa] = useState('');
+  const [valorDespesa, setValorDespesa] = useState('');
+
+  // Estados para a lista de itens
+  const [servicosData, setServicosData] = useState([]);
+  const [produtosData, setProdutosData] = useState([]);
+  const [despesasData, setDespesasData] = useState([]);
+
+  const cleanForm = () => {
+    setNomeServico('');
+    setPrecoServico('');
+    setDescricaoServico('');
+    setNomeProduto('');
+    setPrecoVendaProduto('');
+    setQuantidadeEstoque('');
+    setDescricaoProduto('');
+    setDescricaoDespesa('');
+    setValorDespesa('');
+  }
+
+  // Função para buscar dados da API
+  const fetchData = useCallback(async () => {
+    try {
+      const [servicosRes, produtosRes, despesasRes] = await Promise.all([
+        fetch(`${API_URL}/servicos`),
+        fetch(`${API_URL}/produtos`),
+        fetch(`${API_URL}/despesas`),
+      ]);
+
+      const servicosData = await servicosRes.json();
+      const produtosData = await produtosRes.json();
+      const despesasData = await despesasRes.json();
+
+      if (servicosData.success) setServicosData(servicosData.data);
+      if (produtosData.success) setProdutosData(produtosData.data);
+      if (despesasData.success) setDespesasData(despesasData.data);
+
+    } catch (error) {
+      console.error('Erro ao buscar dados:', error);
+      Alert.alert('Erro', 'Não foi possível carregar os dados. Verifique a conexão com o servidor.');
     }
-    // Aqui, no futuro, você enviaria os dados para o backend/banco de dados
-    console.log({
-      tipo: tipoLancamento,
-      descricao,
-      valor,
-    });
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleSalvarLancamento = async () => {
+    let endpoint = '';
+    let body = {};
     
-    Alert.alert('Sucesso!', 'Novo lançamento adicionado.');
+    // Lógica para escolher o endpoint e os dados com base na aba ativa
+    if (abaAtiva === 'Serviços') {
+      if (!nomeServico || !precoServico || !descricaoServico) {
+        Alert.alert('Erro', 'Preencha todos os campos!');
+        return;
+      }
+      endpoint = '/servicos';
+      body = {
+        nome_servico: nomeServico,
+        preco: parseFloat(precoServico),
+        descricao: descricaoServico
+      };
+    } else if (abaAtiva === 'Produtos') {
+      if (!nomeProduto || !precoVendaProduto || !quantidadeEstoque || !descricaoProduto) {
+        Alert.alert('Erro', 'Preencha todos os campos!');
+        return;
+      }
+      endpoint = '/produtos';
+      body = {
+        nome_produto: nomeProduto,
+        preco_venda: parseFloat(precoVendaProduto),
+        quantidade_estoque: parseInt(quantidadeEstoque),
+        descricao: descricaoProduto
+      };
+    } else if (abaAtiva === 'Despesas') {
+      if (!descricaoDespesa || !valorDespesa) {
+        Alert.alert('Erro', 'Preencha todos os campos!');
+        return;
+      }
+      endpoint = '/despesas';
+      body = {
+        descricao: descricaoDespesa,
+        valor: parseFloat(valorDespesa)
+      };
+    }
     
-    // Limpa os campos e fecha o modal
-    setDescricao('');
-    setValor('');
-    setModalVisivel(false);
+    try {
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        Alert.alert('Sucesso', data.message);
+        setModalVisivel(false);
+        cleanForm(); // Limpa o formulário
+        fetchData(); // Recarrega a lista de itens após o sucesso
+      } else {
+        Alert.alert('Erro', data.message || 'Erro ao salvar lançamento. Tente novamente.');
+      }
+    } catch (error) {
+      console.error('Erro de rede:', error);
+      Alert.alert('Erro', 'Não foi possível conectar ao servidor. Verifique se o back-end está rodando.');
+    }
+  };
+
+  const renderFormFields = () => {
+    switch (abaAtiva) {
+      case 'Serviços':
+        return (
+          <>
+            <TextInput style={styles.input} placeholder="Nome do Serviço" placeholderTextColor="#999" value={nomeServico} onChangeText={setNomeServico} />
+            <TextInput style={styles.input} placeholder="Preço" placeholderTextColor="#999" keyboardType="numeric" value={precoServico} onChangeText={setPrecoServico} />
+            <TextInput style={styles.input} placeholder="Descrição" placeholderTextColor="#999" value={descricaoServico} onChangeText={setDescricaoServico} />
+          </>
+        );
+      case 'Produtos':
+        return (
+          <>
+            <TextInput style={styles.input} placeholder="Nome do Produto" placeholderTextColor="#999" value={nomeProduto} onChangeText={setNomeProduto} />
+            <TextInput style={styles.input} placeholder="Preço de Venda" placeholderTextColor="#999" keyboardType="numeric" value={precoVendaProduto} onChangeText={setPrecoVendaProduto} />
+            <TextInput style={styles.input} placeholder="Quantidade em Estoque" placeholderTextColor="#999" keyboardType="numeric" value={quantidadeEstoque} onChangeText={setQuantidadeEstoque} />
+            <TextInput style={styles.input} placeholder="Descrição" placeholderTextColor="#999" value={descricaoProduto} onChangeText={setDescricaoProduto} />
+          </>
+        );
+      case 'Despesas':
+        return (
+          <>
+            <TextInput style={styles.input} placeholder="Descrição da Despesa" placeholderTextColor="#999" value={descricaoDespesa} onChangeText={setDescricaoDespesa} />
+            <TextInput style={styles.input} placeholder="Valor" placeholderTextColor="#999" keyboardType="numeric" value={valorDespesa} onChangeText={setValorDespesa} />
+          </>
+        );
+      default:
+        return null;
+    }
   };
 
   const renderItem = ({ item }) => (
     <View style={styles.tableRow}>
-      <Text style={styles.tableCell}>{item.descricao || item.nome || item.servico}</Text>
-      <Text style={styles.tableCell}>{item.valor || item.preco}</Text>
+      <Text style={styles.tableCell}>{item.nome_servico || item.nome_produto || item.descricao}</Text>
+      <Text style={styles.tableCell}>{item.preco || item.preco_venda || item.valor}</Text>
     </View>
   );
 
   const getHeader = () => {
-      if (abaAtiva === 'Despesas') return ['Descrição', 'Valor'];
-      if (abaAtiva === 'Produtos') return ['Produto', 'Preço'];
-      if (abaAtiva === 'Precos') return ['Serviço', 'Valor'];
-      return [];
+    if (abaAtiva === 'Serviços') return ['Serviço', 'Preço'];
+    if (abaAtiva === 'Produtos') return ['Produto', 'Preço'];
+    if (abaAtiva === 'Despesas') return ['Descrição', 'Valor'];
+    return [];
   }
 
   const header = getHeader();
 
   return (
     <View style={styles.container}>
-      {/* --- Modal para Adicionar Novo Lançamento --- */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -83,44 +195,11 @@ const Lancamentos = ({ navigation }) => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>Adicionar Novo Lançamento</Text>
-
-            {/* Seletor de Tipo: Entrada ou Saída */}
-            <View style={styles.tipoLancamentoContainer}>
-                <TouchableOpacity 
-                    style={[styles.tipoButton, tipoLancamento === 'Entrada' && styles.tipoButtonAtivo]}
-                    onPress={() => setTipoLancamento('Entrada')}
-                >
-                    <Text style={styles.tipoButtonText}>Entrada</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                    style={[styles.tipoButton, tipoLancamento === 'Saida' && styles.tipoButtonAtivo]}
-                    onPress={() => setTipoLancamento('Saida')}
-                >
-                    <Text style={styles.tipoButtonText}>Saída</Text>
-                </TouchableOpacity>
-            </View>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Descrição (Ex: Corte, Venda de Pomada)"
-              placeholderTextColor="#999"
-              value={descricao}
-              onChangeText={setDescricao}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Valor (Ex: 40.00)"
-              placeholderTextColor="#999"
-              keyboardType="numeric"
-              value={valor}
-              onChangeText={setValor}
-            />
-
+            <Text style={styles.modalTitle}>Adicionar {abaAtiva.slice(0, -1)}</Text>
+            {renderFormFields()}
             <TouchableOpacity style={styles.buttonSalvar} onPress={handleSalvarLancamento}>
-              <Text style={styles.buttonText}>Salvar Lançamento</Text>
+              <Text style={styles.buttonText}>Salvar</Text>
             </TouchableOpacity>
-
             <TouchableOpacity style={styles.buttonCancelar} onPress={() => setModalVisivel(false)}>
               <Text style={styles.buttonText}>Cancelar</Text>
             </TouchableOpacity>
@@ -128,13 +207,11 @@ const Lancamentos = ({ navigation }) => {
         </View>
       </Modal>
 
-      {/* --- Conteúdo Principal da Tela --- */}
       <Text style={styles.title}>Lançamentos</Text>
-
+      
       <View style={styles.tabsContainer}>
-        {/* ... (código das abas não muda) ... */}
-        <TouchableOpacity style={[styles.tab, abaAtiva === 'Precos' && styles.tabAtiva]} onPress={() => setAbaAtiva('Precos')}>
-          <Text style={styles.tabText}>Tabela de Preços</Text>
+        <TouchableOpacity style={[styles.tab, abaAtiva === 'Serviços' && styles.tabAtiva]} onPress={() => setAbaAtiva('Serviços')}>
+          <Text style={styles.tabText}>Serviços</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.tab, abaAtiva === 'Produtos' && styles.tabAtiva]} onPress={() => setAbaAtiva('Produtos')}>
           <Text style={styles.tabText}>Produtos</Text>
@@ -143,20 +220,19 @@ const Lancamentos = ({ navigation }) => {
           <Text style={styles.tabText}>Despesas</Text>
         </TouchableOpacity>
       </View>
-
+      
       <View style={styles.box}>
         <View style={styles.tableHeader}>
             <Text style={styles.tableHeaderCell}>{header[0]}</Text>
             <Text style={styles.tableHeaderCell}>{header[1]}</Text>
         </View>
-        {abaAtiva === 'Precos' && <FlatList data={precosData} renderItem={renderItem} keyExtractor={(item) => item.id} />}
-        {abaAtiva === 'Produtos' && <FlatList data={produtosData} renderItem={renderItem} keyExtractor={(item) => item.id} />}
-        {abaAtiva === 'Despesas' && <FlatList data={despesasData} renderItem={renderItem} keyExtractor={(item) => item.id} />}
+        {abaAtiva === 'Serviços' && <FlatList data={servicosData} renderItem={renderItem} keyExtractor={(item) => item.id.toString()} />}
+        {abaAtiva === 'Produtos' && <FlatList data={produtosData} renderItem={renderItem} keyExtractor={(item) => item.id.toString()} />}
+        {abaAtiva === 'Despesas' && <FlatList data={despesasData} renderItem={renderItem} keyExtractor={(item) => item.id.toString()} />}
       </View>
-      
-      {/* Botão que abre o Modal */}
+
       <TouchableOpacity style={styles.button} onPress={() => setModalVisivel(true)}>
-        <Text style={styles.buttonText}>Adicionar Novo Lançamento</Text>
+        <Text style={styles.buttonText}>Adicionar Novo {abaAtiva.slice(0, -1)}</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.buttonVoltar} onPress={() => navigation.goBack()}>
@@ -166,11 +242,10 @@ const Lancamentos = ({ navigation }) => {
   );
 };
 
-// --- Estilos (Adicionei os estilos para o Modal) ---
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(1, 67, 70, 1)',
     paddingTop: 60,
@@ -199,7 +274,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 15,
     marginBottom: 20,
-    minHeight: 200, // Altura mínima para a tabela
+    minHeight: 200,
     elevation: 5,
   },
   tableHeader: {
@@ -230,7 +305,7 @@ const styles = StyleSheet.create({
   buttonVoltar: {
     width: '100%',
     height: 50,
-    backgroundColor: '#c0392b', // Cor um pouco diferente para o Voltar/Cancelar
+    backgroundColor: '#c0392b',
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
@@ -238,13 +313,11 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-
-  // --- Estilos do Modal ---
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)', // Fundo escurecido
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
   },
   modalView: {
     width: '90%',
@@ -272,6 +345,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     marginBottom: 15,
     fontSize: 16,
+    color: '#333',
   },
   tipoLancamentoContainer: {
     flexDirection: 'row',
@@ -287,7 +361,7 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
   },
   tipoButtonAtivo: {
-    backgroundColor: '#003a38ff',
+    backgroundColor: '#006e6bff',
     borderColor: '#003a38ff',
   },
   tipoButtonText: {
@@ -316,4 +390,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Lancamentos;
+export default Lancamento;

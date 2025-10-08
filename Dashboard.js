@@ -98,11 +98,16 @@ const Dashboard = ({ navigation }) => {
           </View>
         ))}
       </View>
+      <View>
+        <TouchableOpacity style={styles.buttonVoltar} onPress={() => navigation.goBack()}>
+                <Text style={styles.buttonText}>Voltar</Text>
+              </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 };
 
-// --- ESTILOS ATUALIZADOS ---
+// --- ESTILOS ---
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -138,6 +143,17 @@ const styles = StyleSheet.create({
   lancamentoDescricao: { fontSize: 16, color: '#fff' },
   lancamentoValorEntrada: { fontSize: 16, color: '#2ecc71', fontWeight: 'bold' },
   lancamentoValorSaida: { fontSize: 16, color: '#e74c3c', fontWeight: 'bold' },
+
+    buttonVoltar: {
+    width: '100%',
+    height: 50,
+    backgroundColor: '#c0392b', // Cor um pouco diferente para o Voltar/Cancelar
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+    elevation: 3,
+  },
 });
 
 export default Dashboard;
