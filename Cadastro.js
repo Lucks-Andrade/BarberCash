@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert} from 'react-native';
+
+const API_URL = 'http://localhost:3001';
 
 const Cadastro = ({ navigation }) => {
   const [nome, setNome] = useState('');
@@ -7,12 +9,31 @@ const Cadastro = ({ navigation }) => {
   const [telefone, setTelefone] = useState('');
   const[senha,setSenha] = useState('');
 
-  const handleSalvar = () => {
-    if (nome && email) {
-      alert(`Cadastro ${nome} realizado com sucesso!`);
-      navigation.goBack();
-    } else {
-      alert('Preencha todos os campos!');
+  const handleSalvar = async () => {
+    if (!nome || !email || !senha || !telefone) {
+      Alert.alert('Erro', 'Preencha todos os campos!');
+      return;
+    }
+    try{
+      const response = await fetch(`${API_URL}/usuarios`,{
+        method: 'POST',
+        headers:{
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({nome, email, senha, telefone}),
+      });
+
+      const data = await response.json();
+
+      if(response.ok){
+        Alert.alert('Sucesso', data.message);
+        navigation.goBack();
+      }else{
+        Alert.alert('Erro', data.message || 'Erro ao cadastrar. Tente novamente.');
+      }
+    }catch(error){
+      console.error('Erro de rede:', error);
+      Alert.alert('Erro', data.message || 'Não foi possível conectar ao servidor. Verifica a conexão.');
     }
   };
 

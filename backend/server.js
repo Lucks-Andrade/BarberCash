@@ -11,9 +11,9 @@ app.use(express.json()); // Permite que a API entenda requisições com corpo em
 // 3. Configurar a conexão com o Banco de Dados
 //    (Substitua com os dados do seu MySQL)
 const db = mysql.createConnection({
-  host: '127.0.0.1',          // Ou o IP do seu servidor MySQL
+  host: 'localhost',          // Ou o IP do seu servidor MySQL
   user: 'root',               // Seu usuário do MySQL (geralmente 'root')
-  password: '1234', // Sua senha do MySQL
+  password: '', // Sua senha do MySQL
   database: 'barbercash_db'   // O nome do banco de dados que criamos
 });
 
@@ -43,9 +43,26 @@ app.get('/servicos', (req, res) => {
     });
 });
 
+//ROTA PARA O CADASTRO DE USUÁRIOS
+app.post('/usuarios', (req, res) => {
+  const {nome, email, senha, telefone} = req.body;
+
+  if (!nome || !email || !telefone || !senha) {
+    return res.status(400).json({success: false,message: 'Todos os campos são obrigatórios '})
+  }
+    db.query(query, [nome, email, senha, telefone], (err, result) =>{
+      if(err){
+        console.error('Erro ao cadastrar usuário', err);
+        return res.status(500).json({succes: false, message: 'Erro ao cadastrar usuário. Tente novamente.'});
+      }
+      res.status(201).json({seccess: true, message: 'Usuário cadastrado com sucesso!'});
+    });
+
+  const query = 'INSERT INTO usuarios (nome, email, senha, telefone) VALUES (?,?,?,?)';
+});
 
 // 5. Iniciar o servidor
-const PORT = 3306; // A porta que a API vai usar
+const PORT = 3001; // A porta que a API vai usar
 app.listen(PORT, () => {
   console.log(`Servidor da API rodando na porta ${PORT}`);
 });
