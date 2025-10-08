@@ -6,6 +6,7 @@ import Login from './Login';
 import Menu from './Menu';
 import Cadastro from './Cadastro';
 import Lancamento from './Lancamento';
+import Dashboard from './Dashboard';
 
 const Stack = createStackNavigator();
 
@@ -45,9 +46,14 @@ const App = () => {
           
         />
         <Stack.Screen
-        name="Lancamento"
-        component={Lancamento}
-        options={{headerShown: false}}
+          name="Lancamento"
+          component={Lancamento}
+          options={{headerShown: false}}
+        />
+        <Stack.Screen
+          name="Dashboard"
+          component={Dashboard}
+          options={{headerShown: false}}
         />
       </Stack.Navigator>
     </NavigationContainer>
