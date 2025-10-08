@@ -27,7 +27,7 @@ const precosData = [
 ];
 
 
-const Lancamento = ({ navigation }) => {
+const Lancamentos = ({ navigation }) => {
   const [abaAtiva, setAbaAtiva] = useState('Precos');
   
   // --- Estados para o Modal e Formulário ---
@@ -170,7 +170,7 @@ const Lancamento = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     backgroundColor: 'rgba(1, 67, 70, 1)',
     paddingTop: 60,
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
   },
   tipoButtonAtivo: {
-    backgroundColor: '#006e6bff',
+    backgroundColor: '#003a38ff',
     borderColor: '#003a38ff',
   },
   tipoButtonText: {
@@ -316,4 +316,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Lancamento;
+export default Lancamentos;

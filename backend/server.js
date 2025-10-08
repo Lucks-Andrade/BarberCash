@@ -50,16 +50,41 @@ app.post('/usuarios', (req, res) => {
   if (!nome || !email || !telefone || !senha) {
     return res.status(400).json({success: false,message: 'Todos os campos são obrigatórios '})
   }
+
+  // CORREÇÃO: Mova a declaração da query para cá
+  const query = 'INSERT INTO usuarios (nome, email, senha, telefone) VALUES (?,?,?,?)';
     db.query(query, [nome, email, senha, telefone], (err, result) =>{
       if(err){
         console.error('Erro ao cadastrar usuário', err);
-        return res.status(500).json({succes: false, message: 'Erro ao cadastrar usuário. Tente novamente.'});
+        return res.status(500).json({success: false, message: 'Erro ao cadastrar usuário. Tente novamente.'});
       }
-      res.status(201).json({seccess: true, message: 'Usuário cadastrado com sucesso!'});
+      res.status(201).json({success: true, message: 'Usuário cadastrado com sucesso!'});
     });
-
-  const query = 'INSERT INTO usuarios (nome, email, senha, telefone) VALUES (?,?,?,?)';
 });
+
+// NOVA ROTA DE LOGIN
+app.post('/login', (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ success: false, message: 'E-mail e senha são obrigatórios.' });
+  }
+
+  const query = 'SELECT * FROM usuarios WHERE email = ? AND senha = ?';
+  db.query(query, [email, password], (err, results) => {
+    if (err) {
+      console.error('Erro na consulta de login:', err);
+      return res.status(500).json({ success: false, message: 'Erro interno do servidor.' });
+    }
+
+    if (results.length > 0) {
+      res.json({ success: true, message: 'Login realizado com sucesso!' });
+    } else {
+      res.status(401).json({ success: false, message: 'E-mail ou senha incorretos.' });
+    }
+  });
+});
+
 
 // 5. Iniciar o servidor
 const PORT = 3001; // A porta que a API vai usar

@@ -1,15 +1,38 @@
 import React, { useState } from 'react';
-import { View, TextInput, TouchableOpacity, Text, StyleSheet, Image } from 'react-native';
+import { View, TextInput, TouchableOpacity, Text, StyleSheet, Image, Alert } from 'react-native';
+
+const API_URL = 'http://10.0.2.2:3001'; 
 
 const Login = ({ navigation }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
-    if (username && password) {
-      navigation.navigate('Menu');
-    } else {
-      alert('Preencha todos os campos!');
+  const handleLogin = async () => {
+    if (!username || !password) {
+      Alert.alert('Erro', 'Preencha todos os campos!');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: username, password: password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        Alert.alert('Sucesso', data.message);
+        navigation.navigate('Menu');
+      } else {
+        Alert.alert('Erro', data.message || 'Erro ao fazer login. Tente novamente.');
+      }
+    } catch (error) {
+      console.error('Erro de rede:', error);
+      Alert.alert('Erro', 'Não foi possível conectar ao servidor. Verifique a conexão.');
     }
   };
 
@@ -24,7 +47,7 @@ const Login = ({ navigation }) => {
 
       <TextInput
         style={styles.input}
-        placeholder="Usuário"
+        placeholder="E-mail"
         placeholderTextColor="#777"
         value={username}
         onChangeText={setUsername}
