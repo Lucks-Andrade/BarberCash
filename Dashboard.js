@@ -98,11 +98,6 @@ const Dashboard = ({ navigation }) => {
           </View>
         ))}
       </View>
-      <View>
-        <TouchableOpacity style={styles.buttonVoltar} onPress={() => navigation.goBack()}>
-                <Text style={styles.buttonText}>Voltar</Text>
-              </TouchableOpacity>
-      </View>
     </ScrollView>
   );
 };

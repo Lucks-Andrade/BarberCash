@@ -234,10 +234,6 @@ const Lancamento = ({ navigation }) => {
       <TouchableOpacity style={styles.button} onPress={() => setModalVisivel(true)}>
         <Text style={styles.buttonText}>Adicionar Novo {abaAtiva.slice(0, -1)}</Text>
       </TouchableOpacity>
-
-      <TouchableOpacity style={styles.buttonVoltar} onPress={() => navigation.goBack()}>
-        <Text style={styles.buttonText}>Voltar</Text>
-      </TouchableOpacity>
     </View>
   );
 };
