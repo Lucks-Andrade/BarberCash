@@ -7,11 +7,12 @@ import { createStackNavigator } from '@react-navigation/stack';
 import Login from './Login';
 import Cadastro from './Cadastro';
 import Dashboard from './Dashboard';
-import Lancamento from './Lancamento';
+import Catalogo from './Catalogo';
 
 // Navegação por abas (menu fixo)
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import AntDesign from '@expo/vector-icons/AntDesign';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -33,14 +34,14 @@ function MainTabs() {
         tabBarIcon: ({ color, size }) => {
           let iconName;
           if (route.name === 'Dashboard') iconName = 'home-outline';
-          else if (route.name === 'Lançamentos') iconName = 'list-outline';
+          else if (route.name === 'Catalogo') iconName = 'form';
           // Adicione um ícone para "Sair" ou "Perfil" se desejar adicionar uma terceira aba
           return <Ionicons name={iconName} size={size} color={color} />;
         },
       })}
     >
       <Tab.Screen name="Dashboard" component={Dashboard} />
-      <Tab.Screen name="Lançamentos" component={Lancamento} />
+      <Tab.Screen name="Catálogo" component={Catalogo} />
       {/* Você pode adicionar uma terceira aba, como "Perfil" ou "Configurações" */}
       {/* <Tab.Screen name="Perfil" component={PerfilScreen} /> */}
     </Tab.Navigator>
