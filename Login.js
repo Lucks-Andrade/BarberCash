@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, TextInput, TouchableOpacity, Text, StyleSheet, Image, Alert } from 'react-native';
 
-const API_URL = 'http://10.0.2.2:3001'; 
+const API_URL = 'http://192.168.0.164:3001'; 
 
 const Login = ({ navigation }) => {
   const [username, setUsername] = useState('');

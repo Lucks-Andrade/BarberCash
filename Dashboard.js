@@ -1,102 +1,149 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, Alert } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
+import { useIsFocused } from '@react-navigation/native'; // Importa o hook
 
-// A largura da tela continua sendo útil
 const screenWidth = Dimensions.get('window').width;
 
-// --- DADOS DE EXEMPLO (sem alterações) ---
-const dadosDashboard = {
-  saldos: {
-    dia: { valor: 255.00, entradas: 350.00, saidas: 95.00 },
-    semana: { valor: 1480.50, entradas: 1800.00, saidas: 319.50 },
-    mes: { valor: 5650.75, entradas: 7200.00, saidas: 1549.25 },
-  },
-  ultimosLancamentos: [
-    { id: '1', descricao: 'Corte + Barba', valor: 65.00, tipo: 'Entrada' },
-    { id: '2', descricao: 'Venda de Pomada', valor: 35.00, tipo: 'Entrada' },
-    { id: '3', descricao: 'Compra de Lâminas', valor: -15.00, tipo: 'Saida' },
-  ],
-  dadosGrafico: {
-    dia: [
-        { nome: 'Cortes', valor: 180, color: '#006b6f', legendFontColor: '#FFF', legendFontSize: 14 },
-        { nome: 'Vendas', valor: 95, color: '#4a90e2', legendFontColor: '#FFF', legendFontSize: 14 },
-    ],
-    semana: [
-        { nome: 'Cortes', valor: 1200, color: '#006b6f', legendFontColor: '#FFF', legendFontSize: 14 },
-        { nome: 'Vendas', valor: 450, color: '#4a90e2', legendFontColor: '#FFF', legendFontSize: 14 },
-        { nome: 'Outros', valor: 150, color: '#f5a623', legendFontColor: '#FFF', legendFontSize: 14 },
-    ],
-    mes: [
-        { nome: 'Cortes', valor: 4500, color: '#006b6f', legendFontColor: '#FFF', legendFontSize: 14 },
-        { nome: 'Vendas', valor: 1800, color: '#4a90e2', legendFontColor: '#FFF', legendFontSize: 14 },
-        { nome: 'Outros', valor: 900, color: '#f5a623', legendFontColor: '#FFF', legendFontSize: 14 },
-    ]
-  }
-};
-
-const chartConfig = {
-  color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-};
-
-const Dashboard = ({ navigation }) => {
+const Dashboard = () => {
   const [periodoAtivo, setPeriodoAtivo] = useState('dia');
-  const saldoAtual = dadosDashboard.saldos[periodoAtivo];
-  const dadosGraficoAtual = dadosDashboard.dadosGrafico[periodoAtivo] || [];
-  const temDadosParaGrafico = dadosGraficoAtual.length > 0 && dadosGraficoAtual.some(item => item.valor > 0);
+  
+  // Estado inicial zerado para evitar crash
+  const [saldos, setSaldos] = useState({ valor: 0, entradas: 0, saidas: 0 }); 
+  const [dadosGrafico, setDadosGrafico] = useState([]);
+  const [ultimosLancamentos, setUltimosLancamentos] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const isFocused = useIsFocused(); // Hook para saber se a tela está em foco
+
+  const API_URL = 'http://192.168.0.164:3001';  //10.0.2.2 TROCAR PARA ESSE IP QUANDO USAR O ANDROID STUDIO, 192.168.0.164 IP PARA USAR NO CELULAR 
+
+  // useCallback para evitar recriação desnecessária da função
+  const carregarDados = useCallback(async () => {
+    // Só busca dados se a tela estiver em foco
+    if (!isFocused) return; 
+    
+    setLoading(true);
+    try {
+      // Passa o 'periodoAtivo' como query param para o backend
+      const [resumoRes, graficoRes, lancamentosRes] = await Promise.all([
+        fetch(`${API_URL}/dashboard/resumo?periodo=${periodoAtivo}`),
+        fetch(`${API_URL}/dashboard/entradas-categoria?periodo=${periodoAtivo}`),
+        fetch(`${API_URL}/dashboard/ultimos-lancamentos?periodo=${periodoAtivo}`)
+      ]);
+
+      const resumo = await resumoRes.json();
+      const grafico = await graficoRes.json();
+      const lancamentos = await lancamentosRes.json();
+
+      // Define os estados com fallback para evitar crash
+      setSaldos(resumo.success === false ? { valor: 0, entradas: 0, saidas: 0 } : resumo);
+      setDadosGrafico(grafico.success === false ? [] : grafico);
+      setUltimosLancamentos(lancamentos.success === false ? [] : lancamentos);
+
+    } catch (err) {
+      console.error('Erro ao carregar dashboard:', err);
+      Alert.alert('Erro', 'Não foi possível carregar os dados do dashboard.');
+      // Zera os dados em caso de erro de rede
+      setSaldos({ valor: 0, entradas: 0, saidas: 0 }); 
+      setDadosGrafico([]);
+      setUltimosLancamentos([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [isFocused, periodoAtivo]); // Roda de novo se o foco ou o período mudar
+
+  // useEffect para carregar os dados
+  useEffect(() => {
+    carregarDados();
+  }, [carregarDados]); // Roda a função 'carregarDados' sempre que ela mudar
+
+  const saldoAtual = saldos; // Estado já é o objeto direto
+  const temDadosGrafico = dadosGrafico.length > 0 && dadosGrafico.some(d => d.valor > 0);
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#4a90e2" />
+        <Text style={styles.loadingText}>Carregando dashboard...</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Dashboard</Text>
       <Text style={styles.subtitle}>Resumo do seu negócio</Text>
 
-      {/* Card Principal - Sem alterações */}
+      {/* CARD PRINCIPAL */}
       <View style={styles.cardPrincipal}>
         <View style={styles.seletorPeriodo}>
-          <TouchableOpacity onPress={() => setPeriodoAtivo('dia')}><Text style={[styles.periodoTexto, periodoAtivo === 'dia' && styles.periodoAtivo]}>Dia</Text></TouchableOpacity>
-          <TouchableOpacity onPress={() => setPeriodoAtivo('semana')}><Text style={[styles.periodoTexto, periodoAtivo === 'semana' && styles.periodoAtivo]}>Semana</Text></TouchableOpacity>
-          <TouchableOpacity onPress={() => setPeriodoAtivo('mes')}><Text style={[styles.periodoTexto, periodoAtivo === 'mes' && styles.periodoAtivo]}>Mês</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => setPeriodoAtivo('dia')}>
+            <Text style={[styles.periodoTexto, periodoAtivo === 'dia' && styles.periodoAtivo]}>Dia</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setPeriodoAtivo('semana')}>
+            <Text style={[styles.periodoTexto, periodoAtivo === 'semana' && styles.periodoAtivo]}>Semana</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setPeriodoAtivo('mes')}>
+            <Text style={[styles.periodoTexto, periodoAtivo === 'mes' && styles.periodoAtivo]}>Mês</Text>
+          </TouchableOpacity>
         </View>
-        <Text style={styles.cardPrincipalValor}>R$ {saldoAtual.valor.toFixed(2).replace('.', ',')}</Text>
+        <Text style={styles.cardPrincipalValor}>
+          R$ {saldoAtual.valor.toFixed(2).replace('.', ',')}
+        </Text>
         <View style={styles.entradasSaidasContainer}>
-          <View style={styles.entradasSaidasBox}><Text style={styles.entradasLabel}>Entradas</Text><Text style={styles.entradasValor}>R$ {saldoAtual.entradas.toFixed(2).replace('.', ',')}</Text></View>
-          <View style={styles.entradasSaidasBox}><Text style={styles.saidasLabel}>Saídas</Text><Text style={styles.saidasValor}>R$ {saldoAtual.saidas.toFixed(2).replace('.', ',')}</Text></View>
+          <View style={styles.entradasSaidasBox}>
+            <Text style={styles.entradasLabel}>Entradas</Text>
+            <Text style={styles.entradasValor}>R$ {saldoAtual.entradas.toFixed(2).replace('.', ',')}</Text>
+          </View>
+          <View style={styles.entradasSaidasBox}>
+            <Text style={styles.saidasLabel}>Saídas</Text>
+            <Text style={styles.saidasValor}>R$ {saldoAtual.saidas.toFixed(2).replace('.', ',')}</Text>
+          </View>
         </View>
       </View>
 
-      {/* Card do Gráfico - AQUI ESTÁ A CORREÇÃO */}
+      {/* GRÁFICO DE PIZZA */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Composição das Entradas ({periodoAtivo.charAt(0).toUpperCase() + periodoAtivo.slice(1)})</Text>
+        <Text style={styles.cardTitle}>Entradas por Categoria ({periodoAtivo.charAt(0).toUpperCase() + periodoAtivo.slice(1)})</Text>
         <View style={styles.graficoContainer}>
-          {temDadosParaGrafico ? (
+          {temDadosGrafico ? (
             <PieChart
-              data={dadosGraficoAtual}
-              width={screenWidth - 40} // LARGURA DA TELA MENOS O PADDING DO CONTAINER
+              data={dadosGrafico}
+              width={screenWidth - 40}
               height={220}
-              chartConfig={chartConfig}
-              accessor={"valor"}
-              backgroundColor={"transparent"}
-              paddingLeft={"15"} // Um padding fixo e seguro
-              // Removido o 'center' para deixar a biblioteca calcular
+              chartConfig={{ 
+                color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+                propsForLabels: {
+                  fontSize: 12,
+                },
+              }}
+              accessor="valor"
+              backgroundColor="transparent"
+              paddingLeft="15"
               absolute
             />
           ) : (
-            <Text style={styles.semDadosTexto}>Sem dados de entrada para este período.</Text>
+            <Text style={styles.semDadosTexto}>Nenhuma entrada registrada.</Text>
           )}
         </View>
       </View>
 
-      {/* Resto dos cards - Sem alterações */}
+      {/* ÚLTIMOS LANÇAMENTOS */}
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Últimos Lançamentos</Text>
-        {dadosDashboard.ultimosLancamentos.map((item) => (
-          <View key={item.id} style={styles.lancamentoItem}>
-            <Text style={styles.lancamentoDescricao}>{item.descricao}</Text>
-            <Text style={item.tipo === 'Entrada' ? styles.lancamentoValorEntrada : styles.lancamentoValorSaida}>
-              {item.tipo === 'Saida' ? '- R$' : 'R$'} {Math.abs(item.valor).toFixed(2).replace('.', ',')}
-            </Text>
-          </View>
-        ))}
+        <Text style={styles.cardTitle}>Últimos Lançamentos ({periodoAtivo.charAt(0).toUpperCase() + periodoAtivo.slice(1)})</Text>
+        {ultimosLancamentos.length > 0 ? (
+          ultimosLancamentos.map((item) => (
+            <View key={item.id} style={styles.lancamentoItem}>
+              <Text style={styles.lancamentoDescricao}>{item.descricao}</Text>
+              <Text style={item.tipo === 'Entrada' ? styles.lancamentoValorEntrada : styles.lancamentoValorSaida}>
+                {item.tipo === 'Saída' ? '- R$' : 'R$'} {Math.abs(item.valor).toFixed(2).replace('.', ',')}
+              </Text>
+            </View>
+          ))
+        ) : (
+          <Text style={styles.semDadosTexto}>Nenhum lançamento.</Text>
+        )}
       </View>
     </ScrollView>
   );
@@ -107,7 +154,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'rgba(1, 67, 70, 1)',
-    paddingHorizontal: 20, // Padding horizontal do container principal
+    paddingHorizontal: 20, 
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(1, 67, 70, 1)',
+  },
+  loadingText: {
+    color: '#fff',
+    marginTop: 10,
+    fontSize: 16,
   },
   title: { fontSize: 28, fontWeight: 'bold', color: '#fff', alignSelf: 'center', marginTop: 50, marginBottom: 5 },
   subtitle: { fontSize: 16, color: '#ccc', alignSelf: 'center', marginBottom: 20 },
@@ -125,30 +183,19 @@ const styles = StyleSheet.create({
   card: { backgroundColor: 'rgba(0, 107, 111, 0.87)', borderRadius: 15, padding: 20, marginBottom: 20, elevation: 5 },
   cardTitle: { fontSize: 18, fontWeight: 'bold', color: '#fff', marginBottom: 15 },
   graficoContainer: {
-    // Não precisa mais do alignItems, pois o cálculo da largura vai cuidar disso
+    alignItems: 'center',
   },
   semDadosTexto: {
     color: '#fff',
     fontSize: 16,
     fontStyle: 'italic',
     textAlign: 'center',
-    paddingVertical: 80, // Para ocupar o espaço do gráfico
+    paddingVertical: 80, 
   },
   lancamentoItem: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: 'rgba(255, 255, 255, 0.1)' },
   lancamentoDescricao: { fontSize: 16, color: '#fff' },
   lancamentoValorEntrada: { fontSize: 16, color: '#2ecc71', fontWeight: 'bold' },
   lancamentoValorSaida: { fontSize: 16, color: '#e74c3c', fontWeight: 'bold' },
-
-    buttonVoltar: {
-    width: '100%',
-    height: 50,
-    backgroundColor: '#c0392b', // Cor um pouco diferente para o Voltar/Cancelar
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 10,
-    elevation: 3,
-  },
 });
 
 export default Dashboard;

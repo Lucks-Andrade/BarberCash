@@ -13,7 +13,8 @@ const db = mysql.createConnection({
   host: 'localhost',          
   user: 'root',               
   password: '', 
-  database: 'barbercash_db'   
+  database: 'barbercash_db',
+  charset: 'utf8mb4'
 });
 
 db.connect(err => {
@@ -24,12 +25,7 @@ db.connect(err => {
   console.log('Conectado com sucesso ao banco de dados MySQL!');
 });
 
-// 4. Criar uma rota de teste
-app.get('/', (req, res ) => {
-  res.send('API do BarberCash está funcionando!');
-});
-
-// --- ROTAS DE USUÁRIO (Sem alteração) ---
+// --- ROTAS DE USUÁRIO E LOGIN ---
 app.post('/usuarios', (req, res) => {
   const {nome, email, senha, telefone} = req.body;
   if (!nome || !email || !telefone || !senha) {
@@ -64,228 +60,370 @@ app.post('/login', (req, res) => {
   });
 });
 
-// --- ROTAS DE SERVIÇOS ---
+// --- ROTAS DE CATÁLOGO (Serviços, Produtos, Despesas) ---
 
-// Buscar todos (GET) - Sem alteração
+/* SERVIÇOS */
 app.get('/servicos', (req, res) => {
   const query = 'SELECT * FROM servicos';
   db.query(query, (err, results) => {
-    if (err) {
-      return res.status(500).json({ success: false, message: 'Erro ao buscar serviços.' });
-    }
+    if (err) return res.status(500).json({ success: false, message: 'Erro ao buscar serviços.' });
     res.json({ success: true, data: results });
   });
 });
-
-// Adicionar novo (POST) - Sem alteração
 app.post('/servicos', (req, res) => {
   const { nome_servico, preco, descricao } = req.body;
-  if (!nome_servico || preco === undefined || !descricao) {
-    return res.status(400).json({ success: false, message: 'Todos os campos são obrigatórios para Serviço.' });
-  }
   const query = 'INSERT INTO servicos (nome_servico, preco, descricao) VALUES (?, ?, ?)';
   db.query(query, [nome_servico, parseFloat(preco), descricao], (err, result) => {
-    if (err) {
-      console.error('Erro ao adicionar serviço:', err);
-      return res.status(500).json({ success: false, message: 'Erro ao adicionar serviço.' });
-    }
+    if (err) return res.status(500).json({ success: false, message: 'Erro ao adicionar serviço.' });
     res.status(201).json({ success: true, message: 'Serviço adicionado com sucesso!', id: result.insertId });
   });
 });
-
-// <<< INÍCIO DAS NOVAS ROTAS DE SERVIÇOS >>>
-
-// Rota para ATUALIZAR (Editar) um serviço
 app.put('/servicos/:id', (req, res) => {
   const { id } = req.params;
   const { nome_servico, preco, descricao } = req.body;
-
-  if (!nome_servico || preco === undefined || !descricao) {
-    return res.status(400).json({ success: false, message: 'Todos os campos são obrigatórios.' });
-  }
-
   const query = 'UPDATE servicos SET nome_servico = ?, preco = ?, descricao = ? WHERE id = ?';
   db.query(query, [nome_servico, parseFloat(preco), descricao, id], (err, result) => {
-    if (err) {
-      console.error('Erro ao atualizar serviço:', err);
-      return res.status(500).json({ success: false, message: 'Erro ao atualizar serviço.' });
-    }
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: 'Serviço não encontrado.' });
-    }
+    if (err) return res.status(500).json({ success: false, message: 'Erro ao atualizar serviço.' });
+    if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Serviço não encontrado.' });
     res.json({ success: true, message: 'Serviço atualizado com sucesso!' });
   });
 });
-
-// Rota para EXCLUIR um serviço
 app.delete('/servicos/:id', (req, res) => {
   const { id } = req.params;
   const query = 'DELETE FROM servicos WHERE id = ?';
-  
   db.query(query, [id], (err, result) => {
-    if (err) {
-      console.error('Erro ao excluir serviço:', err);
-      return res.status(500).json({ success: false, message: 'Erro ao excluir serviço.' });
-    }
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: 'Serviço não encontrado.' });
-    }
+    if (err) return res.status(500).json({ success: false, message: 'Erro ao excluir serviço.' });
+    if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Serviço não encontrado.' });
     res.json({ success: true, message: 'Serviço excluído com sucesso!' });
   });
 });
 
-// <<< FIM DAS NOVAS ROTAS DE SERVIÇOS >>>
-
-
-// --- ROTAS DE PRODUTOS ---
-
-// Buscar todos (GET) - Sem alteração
+/* PRODUTOS */
 app.get('/produtos', (req, res) => {
   const query = 'SELECT * FROM produtos';
   db.query(query, (err, results) => {
-    if (err) {
-      return res.status(500).json({ success: false, message: 'Erro ao buscar produtos.' });
-    }
+    if (err) return res.status(500).json({ success: false, message: 'Erro ao buscar produtos.' });
     res.json({ success: true, data: results });
   });
 });
-
-// Adicionar novo (POST) - Sem alteração
 app.post('/produtos', (req, res) => {
   const { nome_produto, preco_venda, quantidade_estoque, descricao } = req.body;
-  if (!nome_produto || preco_venda === undefined || quantidade_estoque === undefined || !descricao) {
-    return res.status(400).json({ success: false, message: 'Todos os campos são obrigatórios para Produto.' });
-  }
   const query = 'INSERT INTO produtos (nome_produto, preco_venda, quantidade_estoque, descricao) VALUES (?, ?, ?, ?)';
   db.query(query, [nome_produto, parseFloat(preco_venda), parseInt(quantidade_estoque), descricao], (err, result) => {
-    if (err) {
-      console.error('Erro ao adicionar produto:', err);
-      return res.status(500).json({ success: false, message: 'Erro ao adicionar produto.' });
-    }
+    if (err) return res.status(500).json({ success: false, message: 'Erro ao adicionar produto.' });
     res.status(201).json({ success: true, message: 'Produto adicionado com sucesso!', id: result.insertId });
   });
 });
-
-
-// <<< INÍCIO DAS NOVAS ROTAS DE PRODUTOS >>>
-
-// Rota para ATUALIZAR (Editar) um produto
 app.put('/produtos/:id', (req, res) => {
   const { id } = req.params;
   const { nome_produto, preco_venda, quantidade_estoque, descricao } = req.body;
-
-  if (!nome_produto || preco_venda === undefined || quantidade_estoque === undefined || !descricao) {
-    return res.status(400).json({ success: false, message: 'Todos os campos são obrigatórios.' });
-  }
-
   const query = 'UPDATE produtos SET nome_produto = ?, preco_venda = ?, quantidade_estoque = ?, descricao = ? WHERE id = ?';
   db.query(query, [nome_produto, parseFloat(preco_venda), parseInt(quantidade_estoque), descricao, id], (err, result) => {
-    if (err) {
-      console.error('Erro ao atualizar produto:', err);
-      return res.status(500).json({ success: false, message: 'Erro ao atualizar produto.' });
-    }
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: 'Produto não encontrado.' });
-    }
+    if (err) return res.status(500).json({ success: false, message: 'Erro ao atualizar produto.' });
+    if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Produto não encontrado.' });
     res.json({ success: true, message: 'Produto atualizado com sucesso!' });
   });
 });
-
-// Rota para EXCLUIR um produto
 app.delete('/produtos/:id', (req, res) => {
   const { id } = req.params;
   const query = 'DELETE FROM produtos WHERE id = ?';
-  
   db.query(query, [id], (err, result) => {
-    if (err) {
-      console.error('Erro ao excluir produto:', err);
-      return res.status(500).json({ success: false, message: 'Erro ao excluir produto.' });
-    }
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: 'Produto não encontrado.' });
-    }
+    if (err) return res.status(500).json({ success: false, message: 'Erro ao excluir produto.' });
+    if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Produto não encontrado.' });
     res.json({ success: true, message: 'Produto excluído com sucesso!' });
   });
 });
 
-// <<< FIM DAS NOVAS ROTAS DE PRODUTOS >>>
-
-
-// --- ROTAS DE DESPESAS ---
-
-// Buscar todas (GET) - Sem alteração
+/* DESPESAS */
 app.get('/despesas', (req, res) => {
   const query = 'SELECT * FROM despesas';
   db.query(query, (err, results) => {
+    if (err) return res.status(500).json({ success: false, message: 'Erro ao buscar despesas.' });
+    res.json({ success: true, data: results });
+  });
+});
+app.post('/despesas', (req, res) => {
+  const { descricao, valor } = req.body;
+  const query = 'INSERT INTO despesas (descricao, valor) VALUES (?, ?)';
+  db.query(query, [descricao, parseFloat(valor)], (err, result) => {
+    if (err) return res.status(500).json({ success: false, message: 'Erro ao adicionar despesa.' });
+    res.status(201).json({ success: true, message: 'Despesa adicionada com sucesso!', id: result.insertId });
+  });
+});
+app.put('/despesas/:id', (req, res) => {
+  const { id } = req.params;
+  const { descricao, valor } = req.body;
+  const query = 'UPDATE despesas SET descricao = ?, valor = ? WHERE id = ?';
+  db.query(query, [descricao, parseFloat(valor), id], (err, result) => {
+    if (err) return res.status(500).json({ success: false, message: 'Erro ao atualizar despesa.' });
+    if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Despesa não encontrada.' });
+    res.json({ success: true, message: 'Despesa atualizada com sucesso!' });
+  });
+});
+app.delete('/despesas/:id', (req, res) => {
+  const { id } = req.params;
+  const query = 'DELETE FROM despesas WHERE id = ?';
+  db.query(query, [id], (err, result) => {
+    if (err) return res.status(500).json({ success: false, message: 'Erro ao excluir despesa.' });
+    if (result.affectedRows === 0) return res.status(404).json({ success: false, message: 'Despesa não encontrada.' });
+    res.json({ success: true, message: 'Despesa excluída com sucesso!' });
+  });
+});
+
+
+// ----------------------------------------------
+// --- ROTAS DE LANÇAMENTOS (TRANSAÇÕES) ---
+// ----------------------------------------------
+
+// Rota para CRIAR um novo lançamento
+app.post('/lancamentos', (req, res) => {
+  const { 
+    tipo, 
+    descricao, 
+    valor, 
+    categoria, 
+    forma_pagamento, 
+    id_servico_vendido, 
+    id_produto_vendido 
+  } = req.body;
+
+  const data_lancamento = new Date(); 
+
+  const query = `
+    INSERT INTO lancamentos 
+    (tipo, descricao, valor, data_lancamento, categoria, forma_pagamento, id_servico_vendido, id_produto_vendido) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `;
+  
+  db.query(query, [
+    tipo, 
+    descricao, 
+    parseFloat(valor), 
+    data_lancamento, 
+    categoria, 
+    // Garante que o valor seja NULL se não for fornecido (para despesas)
+    forma_pagamento || null, 
+    id_servico_vendido || null, 
+    id_produto_vendido || null
+  ], (err, result) => {
     if (err) {
-      return res.status(500).json({ success: false, message: 'Erro ao buscar despesas.' });
+      console.error('Erro ao salvar lançamento:', err);
+      return res.status(500).json({ success: false, message: 'Erro ao salvar lançamento.' });
+    }
+    res.status(201).json({ success: true, message: 'Lançamento salvo com sucesso!', id: result.insertId });
+  });
+});
+
+// Rota para LISTAR lançamentos (com filtros)
+app.get('/lancamentos', (req, res) => {
+  const { data_inicio, data_fim, categoria } = req.query;
+
+  let query = 'SELECT * FROM lancamentos WHERE 1=1';
+  const params = [];
+
+  if (data_inicio && data_fim) {
+    query += ' AND data_lancamento BETWEEN ? AND ?';
+    params.push(data_inicio, data_fim + ' 23:59:59'); // Inclui o dia todo
+  }
+
+  if (categoria && categoria !== 'Todos') { // Adiciona a verificação 'Todos'
+    if (Array.isArray(categoria)) {
+      query += ` AND categoria IN (?)`;
+      params.push(categoria);
+    } else {
+      query += ' AND categoria = ?';
+      params.push(categoria);
+    }
+  }
+
+  query += ' ORDER BY data_lancamento DESC'; // Mais novos primeiro
+
+  db.query(query, params, (err, results) => {
+    if (err) {
+      console.error('Erro ao buscar lançamentos:', err);
+      return res.status(500).json({ success: false, message: 'Erro ao buscar lançamentos.' });
     }
     res.json({ success: true, data: results });
   });
 });
 
-// Adicionar nova (POST) - Sem alteração
-app.post('/despesas', (req, res) => {
-  const { descricao, valor } = req.body;
-  if (!descricao || valor === undefined) {
-    return res.status(400).json({ success: false, message: 'Descrição e valor são obrigatórios para Despesa.' });
-  }
-  const query = 'INSERT INTO despesas (descricao, valor) VALUES (?, ?)';
-  db.query(query, [descricao, parseFloat(valor)], (err, result) => {
-    if (err) {
-      console.error('Erro ao adicionar despesa:', err);
-      return res.status(500).json({ success: false, message: 'Erro ao adicionar despesa.' });
-    }
-    res.status(201).json({ success: true, message: 'Despesa adicionada com sucesso!', id: result.insertId });
-  });
-});
-
-// <<< INÍCIO DAS NOVAS ROTAS DE DESPESAS >>>
-
-// Rota para ATUALIZAR (Editar) uma despesa
-app.put('/despesas/:id', (req, res) => {
+// Rota para ATUALIZAR (Editar) um lançamento
+app.put('/lancamentos/:id', (req, res) => {
   const { id } = req.params;
-  const { descricao, valor } = req.body;
+  const { 
+    tipo, 
+    descricao, 
+    valor, 
+    categoria, 
+    forma_pagamento, 
+    id_servico_vendido, 
+    id_produto_vendido 
+  } = req.body;
 
-  if (!descricao || valor === undefined) {
-    return res.status(400).json({ success: false, message: 'Descrição e valor são obrigatórios.' });
-  }
+  const query = `
+    UPDATE lancamentos SET 
+    tipo = ?, 
+    descricao = ?, 
+    valor = ?, 
+    categoria = ?, 
+    forma_pagamento = ?, 
+    id_servico_vendido = ?, 
+    id_produto_vendido = ?
+    WHERE id = ?
+  `;
 
-  const query = 'UPDATE despesas SET descricao = ?, valor = ? WHERE id = ?';
-  db.query(query, [descricao, parseFloat(valor), id], (err, result) => {
+  db.query(query, [
+    tipo, 
+    descricao, 
+    parseFloat(valor), 
+    categoria, 
+    forma_pagamento || null, 
+    id_servico_vendido || null, 
+    id_produto_vendido || null,
+    id
+  ], (err, result) => {
     if (err) {
-      console.error('Erro ao atualizar despesa:', err);
-      return res.status(500).json({ success: false, message: 'Erro ao atualizar despesa.' });
+      console.error('Erro ao atualizar lançamento:', err);
+      return res.status(500).json({ success: false, message: 'Erro ao atualizar lançamento.' });
     }
     if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: 'Despesa não encontrada.' });
+      return res.status(404).json({ success: false, message: 'Lançamento não encontrado.' });
     }
-    res.json({ success: true, message: 'Despesa atualizada com sucesso!' });
+    res.json({ success: true, message: 'Lançamento atualizado com sucesso!' });
   });
 });
 
-// Rota para EXCLUIR uma despesa
-app.delete('/despesas/:id', (req, res) => {
+// Rota para EXCLUIR um lançamento
+app.delete('/lancamentos/:id', (req, res) => {
   const { id } = req.params;
-  const query = 'DELETE FROM despesas WHERE id = ?';
+  const query = 'DELETE FROM lancamentos WHERE id = ?';
   
   db.query(query, [id], (err, result) => {
     if (err) {
-      console.error('Erro ao excluir despesa:', err);
-      return res.status(500).json({ success: false, message: 'Erro ao excluir despesa.' });
+      console.error('Erro ao excluir lançamento:', err);
+      return res.status(500).json({ success: false, message: 'Erro ao excluir lançamento.' });
     }
     if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: 'Despesa não encontrada.' });
+      return res.status(404).json({ success: false, message: 'Lançamento não encontrado.' });
     }
-    res.json({ success: true, message: 'Despesa excluída com sucesso!' });
+    res.json({ success: true, message: 'Lançamento excluído com sucesso!' });
   });
 });
 
-// <<< FIM DAS NOVAS ROTAS DE DESPESAS >>>
+// ----------------------------------------------
+// --- ROTAS DO DASHBOARD (DINÂMICAS) ---
+// ----------------------------------------------
+
+// Função auxiliar para montar a query de data
+const getWherePeriodo = (periodo) => {
+  switch (periodo) {
+    case 'semana':
+      return 'YEARWEEK(data_lancamento, 1) = YEARWEEK(CURDATE(), 1)';
+    case 'mes':
+      return 'MONTH(data_lancamento) = MONTH(CURDATE()) AND YEAR(data_lancamento) = YEAR(CURDATE())';
+    case 'dia':
+    default:
+      return 'DATE(data_lancamento) = CURDATE()';
+  }
+};
+
+// Rota de Resumo (Saldos) - ATUALIZADA
+app.get('/dashboard/resumo', (req, res) => {
+  const { periodo } = req.query; // Pega o período (dia, semana, mes)
+  const whereClause = getWherePeriodo(periodo); // Monta a cláusula WHERE
+
+  const query = `
+    SELECT 
+      SUM(CASE WHEN tipo = 'Entrada' THEN valor ELSE 0 END) as entradas,
+      SUM(CASE WHEN tipo = 'Saída' THEN valor ELSE 0 END) as saidas,
+      SUM(CASE WHEN tipo = 'Entrada' THEN valor ELSE -valor END) as valor
+    FROM lancamentos 
+    WHERE ${whereClause}
+  `;
+
+  db.query(query, (err, result) => {
+    if (err) {
+      console.error("Erro no resumo:", err);
+      return res.status(500).json({ success: false, message: 'Erro ao calcular resumo.' });
+    }
+    
+    const data = {
+      entradas: parseFloat(result[0].entradas) || 0,
+      saidas: parseFloat(result[0].saidas) || 0,
+      valor: parseFloat(result[0].valor) || 0
+    };
+    
+    res.json(data); // Retorna o objeto direto
+  });
+});
+
+// Rota do Gráfico (Entradas por Categoria) - ATUALIZADA
+app.get('/dashboard/entradas-categoria', (req, res) => {
+  const { periodo } = req.query; // Pega o período
+  const whereClause = getWherePeriodo(periodo); // Monta a cláusula WHERE
+
+  const query = `
+    SELECT 
+      categoria as nome, 
+      SUM(valor) as valor
+    FROM lancamentos
+    WHERE tipo = 'Entrada' AND ${whereClause} 
+    GROUP BY categoria
+  `;
+  
+  const cores = {
+    'Venda de Serviço': '#006b6f',
+    'Venda de Produto': '#4a90e2',
+    'Outras': '#f5a623' // Cor para qualquer outra categoria
+  };
+
+  db.query(query, (err, results) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: 'Erro ao buscar dados do gráfico.' });
+    }
+    
+    const dataGrafico = results.map(item => ({
+      ...item,
+      valor: parseFloat(item.valor),
+      color: cores[item.nome] || cores['Outras'],
+      legendFontColor: '#FFF',
+      legendFontSize: 14
+    }));
+
+    res.json(dataGrafico);
+  });
+});
+
+// Rota dos Últimos Lançamentos - ATUALIZADA
+app.get('/dashboard/ultimos-lancamentos', (req, res) => {
+  const { periodo } = req.query; // Pega o período
+  const whereClause = getWherePeriodo(periodo); // Monta a cláusula WHERE
+  
+  const query = `
+    SELECT id, tipo, descricao, valor 
+    FROM lancamentos 
+    WHERE ${whereClause}
+    ORDER BY data_lancamento DESC 
+    LIMIT 5
+  `;
+  
+  db.query(query, (err, results) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: 'Erro ao buscar últimos lançamentos.' });
+    }
+    
+    const dataFormatada = results.map(item => ({
+      ...item,
+      valor: parseFloat(item.valor)
+    }));
+    
+    res.json(dataFormatada);
+  });
+});
 
 
 // 5. Iniciar o servidor
-const PORT = 3001;
+const PORT = 3001; 
 app.listen(PORT, () => {
   console.log(`Servidor da API rodando na porta ${PORT}`);
 });

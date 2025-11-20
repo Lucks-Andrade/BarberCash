@@ -12,7 +12,7 @@ import {
 // Este import não está sendo usado, mas pode deixar aí sem problemas
 import { ScrollView } from 'react-native-gesture-handler'; 
 
-const API_URL = 'http://10.0.2.2:3001';
+const API_URL = 'http://192.168.0.164:3001';
 
 const Catalogo = ({ navigation }) => { // <<< NOME ALTERADO (correto)
   const [abaAtiva, setAbaAtiva] = useState('Serviços');
